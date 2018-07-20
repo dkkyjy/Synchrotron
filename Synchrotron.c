@@ -84,10 +84,10 @@ PyObject* J(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
     while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
         double* in_dataptr = in_iter->dataptr;
         double* out_dataptr = out_iter->dataptr;
-        if (SpectrumType == 1):
-            double* out_dataptr = J_PowerLaw(*in_dataptr);
-        if (SpectrumType == 2):
-            double* out_dataptr = J_BrokenPowerLaw(*in_dataptr);
+        if(SpectrumType == 1)
+            *out_dataptr = J_PowerLaw(*in_dataptr, B, pars);
+        if(SpectrumType == 2)
+            *out_dataptr = J_BrokenPowerLaw(*in_dataptr, B, pars);
         PyArray_ITER_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
     }
@@ -96,21 +96,6 @@ PyObject* J(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
     PyArray_INCREF(out_array);
     return out_array;
 }
-
-    /*
-    Py_ssize_t num = PyList_Size(nuList);
-    PyObject* jList = PyList_New(num);
-    for(int i=0; i<num; i++){
-        double J;
-        double nu = PyFloat_AsDouble(PyList_GetItem(nuList, i));
-        if (SpectrumType == 1)
-            J = J_PowerLaw(nu, B, pars);
-        if (SpectrumType == 2)
-            J = J_BrokenPowerLaw(nu, B, pars);
-        PyList_SetItem(jList, i, PyFloat_FromDouble(J));
-    }
-    return jList;
-    */
 
 
 double h(double nu, double t, double n, double K, double nu_B){
@@ -156,50 +141,42 @@ double K_BrokenPowerLaw(double nu, double B, double* pars){
 
 
 //SpectrumType: 1-PowerLaw; 2-BrokenPowerLaw
-PyArrayObject* K(PyArrayObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
+PyObject* K(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
     Py_ssize_t parNum = PyTuple_Size(SpectrumPars);
     double pars[parNum];
     for(int ipar=0; ipar<parNum; ipar++)
         pars[ipar] = PyFloat_AsDouble(PyTuple_GetItem(SpectrumPars, ipar));
 
-    PyArrayObject* k = PyArray_NewLikeArray(nu, NPY_ANYORDER, NULL, 0);
-    PyArrayIterObject* in_iter = PyArray_IterNew(nu);
-    PyArrayIterObject* out_iter = PyArray_IterNew(k);
+    PyArrayObject* in_array;
+    PyObject* out_array;
+    PyArg_ParseTuple(nu, "O!", &PyArray_Type, &in_array);
+    out_array = PyArray_NewLikeArray(in_array, NPY_ANYORDER, NULL, 0);
+    PyArrayIterObject* in_iter = PyArray_IterNew(in_array);
+    PyArrayIterObject* out_iter = PyArray_IterNew(out_array);
     while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
         double* in_dataptr = in_iter->dataptr;
         double* out_dataptr = out_iter->dataptr;
-        if (SpectrumType == 1):
-            double* out_dataptr = K_PowerLaw(*in_dataptr);
-        if (SpectrumType == 2):
-            double* out_dataptr = K_BrokenPowerLaw(*in_dataptr);
+        if(SpectrumType == 1)
+            *out_dataptr = K_PowerLaw(*in_dataptr, B, pars);
+        if(SpectrumType == 2)
+            *out_dataptr = K_BrokenPowerLaw(*in_dataptr, B, pars);
         PyArray_ITER_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
     }
     PyArray_DECREF(in_iter);
     PyArray_DECREF(out_iter);
-    PyArray_INCREF(k);
-    return k;
+    PyArray_INCREF(out_array);
+    return out_array;
 }
 
-    /*
-    Py_ssize_t num = PyList_Size(nuList);
-    PyObject* kList = PyList_New(num);
-    for(int i=0; i<num; i++){
-        double K;
-        double nu = PyFloat_AsDouble(PyList_GetItem(nuList, i));
-        if (SpectrumType == 1)
-            K = K_PowerLaw(nu, B, pars);
-        if (SpectrumType == 2)
-            K = K_BrokenPowerLaw(nu, B, pars);
-        PyList_SetItem(kList, i, PyFloat_FromDouble(K));
-    }
-    return kList;
-    */
 
-PyArrayObject* Tau(PyArrayObject* k, double R){
-    PyArrayObject* tau = PyArray_NewLikeArray(k, NPY_ANYORDER, NULL, 0);
-    PyArrayIterObject* in_iter = PyArray_IterNew(nu);
-    PyArrayIterObject* out_iter = PyArray_IterNew(k);
+PyObject* Tau(PyObject* k, double R){
+    PyArrayObject* in_array;
+    PyObject* out_array;
+    PyArg_ParseTuple(k, "O!", &PyArray_Type, &in_array);
+    out_array = PyArray_NewLikeArray(in_array, NPY_ANYORDER, NULL, 0);
+    PyArrayIterObject* in_iter = PyArray_IterNew(in_array);
+    PyArrayIterObject* out_iter = PyArray_IterNew(out_array);
     while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
         double* in_dataptr = in_iter->dataptr;
         double* out_dataptr = out_iter->dataptr;
@@ -209,10 +186,11 @@ PyArrayObject* Tau(PyArrayObject* k, double R){
     }
     PyArray_DECREF(in_iter);
     PyArray_DECREF(out_iter);
-    PyArray_INCREF(tau);
-    return tau;
+    PyArray_INCREF(out_array);
+    return out_array;
 }
 
+/*
 PyArrayObject* I(PyArrayObject* j, PyArrayObject* k, double R){
     PyArrayObject* tau = Tau(k, R)
     PyArrayObject* I = PyArray_NewLikeArray(j, NPY_ANYORDER, NULL, 0);
@@ -239,21 +217,7 @@ PyArrayObject* I(PyArrayObject* j, PyArrayObject* k, double R){
     return I;
 }
 
-    /*
-    Py_ssize_t num = PyList_Size(nuList);
-    PyObject* IList = PyList_New(num);
-    for(int i=0; i<num; i++){
-        double j = PyFloat_AsDouble(PyList_GetItem(jList, i));
-        double k = PyFloat_AsDouble(PyList_GetItem(kList, i));
-        double nu = PyFloat_AsDouble(PyList_GetItem(nuList, i));
-        double tau = 2 * R * k;
-        double I = j / k * (1 - 2 / pow(tau, 2) * (1 - exp(-tau) * (tau + 1)));
-        PyList_SetItem(IList, i, PyFloat_FromDouble(I));
-    }
-    return IList;
-    */
 
-/*
 PyObject* L(PyObject* nuList, double B, double R, int SpectrumType, PyObject* SpectrumPars){
     PyObject* IList = I(nuList, B, R, SpectrumType, SpectrumPars);
 
@@ -281,10 +245,13 @@ PyObject* F(PyObject* nuList, double B, double R, double delta, double dL, doubl
 }
 */
 
-PyArrayObject* Nu_obs(PyArrayObject* nu, double delta, double z){
-    PyArrayObject* nu_obs = PyArray_NewLikeArray(nu, NPY_ANYORDER, NULL, 0);
-    PyArrayIterObject* in_iter = PyArray_IterNew(nu);
-    PyArrayIterObject* out_iter = PyArray_IterNew(nu_obs);
+PyObject* Nu_obs(PyObject* nu, double delta, double z){
+    PyArrayObject* in_array;
+    PyObject* out_array;
+    PyArg_ParseTuple(nu, "O!", &PyArray_Type, &in_array);
+    out_array = PyArray_NewLikeArray(in_array, NPY_ANYORDER, NULL, 0);
+    PyArrayIterObject* in_iter = PyArray_IterNew(in_array);
+    PyArrayIterObject* out_iter = PyArray_IterNew(out_array);
     while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
         double* in_dataptr = in_iter->dataptr;
         double* out_dataptr = out_iter->dataptr;
@@ -294,6 +261,6 @@ PyArrayObject* Nu_obs(PyArrayObject* nu, double delta, double z){
     }
     PyArray_DECREF(in_iter);
     PyArray_DECREF(out_iter);
-    PyArray_INCREF(nu_obs);
-    return nu_obs;
+    PyArray_INCREF(out_array);
+    return out_array;
 }
