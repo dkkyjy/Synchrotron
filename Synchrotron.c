@@ -86,17 +86,11 @@ static PyObject* J(PyObject* self, PyObject* args){
     int SpectrumType;
     PyTupleObject* SpectrumPars;
     PyArg_ParseTuple(args, "O!diO!", &PyArray_Type, &nu, &B, &SpectrumType, &PyTuple_Type, &SpectrumPars);
-    //printf("B=%f\n", B);
-    //printf("SpectrumType=%d\n", SpectrumType);
     
     Py_ssize_t parNum = PyTuple_Size(SpectrumPars);
-//    printf("parNum=%d\n", parNum);
     double pars[parNum];
-    for(int ipar=0; ipar<parNum; ++ipar){
-        //printf("ipar = %d\n", ipar);
+    for(int ipar=0; ipar<parNum; ++ipar)
         pars[ipar] = PyFloat_AsDouble(PyTuple_GetItem(SpectrumPars, ipar));
-        //printf("pars[%d]=%f\n", ipar, pars[ipar]);
-    }
 
     PyArrayObject* in_array = nu;
     PyObject* out_array;
@@ -175,17 +169,22 @@ void K_BrokenPowerLaw(double* nu, double B, double K1, double K2, double n1, dou
     }
 }
 */
-/*
+
 //SpectrumType: 1-PowerLaw; 2-BrokenPowerLaw
-PyObject* K(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
+static PyObject* K(PyObject* self, PyObject* args){
+    PyArrayObject* nu;
+    double B;
+    int SpectrumType;
+    PyTupleObject* SpectrumPars;
+    PyArg_ParseTuple(args, "O!diO!", &PyArray_Type, &nu, &B, &SpectrumType, &PyTuple_Type, &SpectrumPars);
+
     Py_ssize_t parNum = PyTuple_Size(SpectrumPars);
     double pars[parNum];
     for(int ipar=0; ipar<parNum; ipar++)
         pars[ipar] = PyFloat_AsDouble(PyTuple_GetItem(SpectrumPars, ipar));
 
-    PyArrayObject* in_array;
+    PyArrayObject* in_array = nu;
     PyObject* out_array;
-    PyArg_ParseTuple(nu, "O!", &PyArray_Type, &in_array);
     out_array = PyArray_NewLikeArray(in_array, NPY_ANYORDER, NULL, 0);
     PyArrayIterObject* in_iter = PyArray_IterNew(in_array);
     PyArrayIterObject* out_iter = PyArray_IterNew(out_array);
@@ -204,7 +203,7 @@ PyObject* K(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
     Py_INCREF(out_array);
     return out_array;
 }
-*/
+
 /*
 PyObject* Tau(PyObject* k, double R){
     PyArrayObject* in_array;
@@ -307,7 +306,7 @@ PyObject* Nu_obs(PyObject* nu, double delta, double z){
 static PyMethodDef Synchrotron[] = 
 {
     {"J", (PyCFunction)J, METH_VARARGS, "calculate the emission coefficient of Synchrotron"},
-//    {"K", (PyCFunction)K, METH_VARARGS, "calculate the absorption coefficient of Synchrotron"},
+    {"K", (PyCFunction)K, METH_VARARGS, "calculate the absorption coefficient of Synchrotron"},
     {NULL, NULL}
 };
 

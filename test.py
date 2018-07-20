@@ -18,20 +18,20 @@ SpectrumPars = (K, n, gamma_min, gamma_max)
 
 nu = np.logspace(10, 20, 100)
 for B in [1, 10, 100]:
-    print(B)
     j = Synchrotron.J(nu, B, SpectrumType, SpectrumPars)
-    #k = Synchrotron.K(nu, B, SpectrumType, SpectrumPars)
-    #I = Synchrotron.I(list(nu), B, R, SpectrumType, SpectrumPars)
-    #L = Synchrotron.L(list(nu), B, R, SpectrumType, SpectrumPars)
-    #F = Synchrotron.F(list(nu), B, R, delta, dL, z, SpectrumType, SpectrumPars)
+    k = Synchrotron.K(nu, B, SpectrumType, SpectrumPars)
+    #I = Synchrotron.I(nu, B, R, SpectrumType, SpectrumPars)
+    #L = Synchrotron.L(nu, B, R, SpectrumType, SpectrumPars)
+    #F = Synchrotron.F(nu, B, R, delta, dL, z, SpectrumType, SpectrumPars)
 
-    #tau = 2 * R * np.array(k)
-    #I_python = np.array(j)/np.array(k) * (1 - 2/tau**2 * (1 - np.e**(-tau) * (tau + 1)))
-    #plt.plot(I - I_python)
+    tau = 2 * R * np.array(k)
+    plt.loglog(nu, tau, label=f'B={B}T')
+    I = np.array(j)/np.array(k) * (1 - 2/tau**2 * (1 - np.e**(-tau) * (tau + 1)))
+    L = 4 * np.pi**2 * R**2 * I
+    F = L / (4*np.pi*dL**2)
 
-    #nu_obs = Synchrotron.Nu_obs(list(nu), delta, z)
-    #nu_obs = np.array(nu_obs)
-    plt.loglog(nu, nu*j, label=f'B={B}T')
+    nu_obs = nu * delta / (1+z)
+    #plt.loglog(nu, nu*j, label=f'B={B}T')
     #plt.loglog(nu, nu*k, label=f'B={B}T')
     #plt.loglog(nu_obs, nu_obs*F, label=f'B={B}T')
 
@@ -62,14 +62,3 @@ plt.ylim(1e-17, 1e-7)
 plt.xlabel(r'$\nu$ [Hz]')
 plt.ylabel(r'$\nu$ j$_{\nu}$ [erg cm$^{-3}$ s$^{-1}$]')
 plt.show()
-assert False
-
-tmin = time.time()
-nu_obs = Synchrotron.Nu_obs(list(nu), delta, z)
-tmax = time.time()
-print(f'C use: {tmax-tmin}s')
-
-tmin = time.time()
-nu_obs_python = nu * delta / (1+z)
-tmax = time.time()
-print(f'Python use: {tmax-tmin}s')

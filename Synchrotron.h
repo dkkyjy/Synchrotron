@@ -18,7 +18,7 @@ double k_PowerLaw(double nu, double B, double K, double n, double gamma_min, dou
 double K_PowerLaw(double nu, double B, double* pars);
 double k_BrokenPowerLaw(double nu, double B, double K1, double K2, double n1, double n2, double gamma_min, double gamma_b, double gamma_max);
 double K_BrokenPowerLaw(double nu, double B, double* pars);
-//PyObject* K(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars);
+static PyObject* K(PyObject* self, PyObject* args);
 
 //PyObject* Tau(PyObject* k, double R);
 //PyObject* I(PyObject* j, PyObject* k, double R);
