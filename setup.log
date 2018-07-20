@@ -1,0 +1,21 @@
+running build_ext
+building '_Synchrotron' extension
+gcc -pthread -B /home/kai/anaconda3/compiler_compat -Wl,--sysroot=/ -Wsign-compare -DNDEBUG -g -fwrapv -O3 -Wall -Wstrict-prototypes -fPIC -I/usr/local/include -I/home/kai/anaconda3/lib/python3.6/site-packages/numpy/core/include -I/home/kai/anaconda3/include/python3.6m -c Synchrotron.c -o build/temp.linux-x86_64-3.6/Synchrotron.o
+In file included from Synchrotron.c:3:0:
+Synchrotron.h:10:1: error: unknown type name ‘PyObject’
+ PyObject* J(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
+ ^
+Synchrotron.h:10:13: error: unknown type name ‘PyObject’
+ PyObject* J(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
+             ^
+Synchrotron.h:10:55: error: unknown type name ‘PyObject’
+ PyObject* J(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
+                                                       ^
+In file included from /home/kai/anaconda3/lib/python3.6/site-packages/numpy/core/include/numpy/ndarraytypes.h:1809:0,
+                 from /home/kai/anaconda3/lib/python3.6/site-packages/numpy/core/include/numpy/ndarrayobject.h:18,
+                 from /home/kai/anaconda3/lib/python3.6/site-packages/numpy/core/include/numpy/arrayobject.h:4,
+                 from Synchrotron.c:5:
+/home/kai/anaconda3/lib/python3.6/site-packages/numpy/core/include/numpy/npy_1_7_deprecated_api.h:15:2: warning: #warning "Using deprecated NumPy API, disable it by " "#defining NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION" [-Wcpp]
+ #warning "Using deprecated NumPy API, disable it by " \
+  ^
+error: command 'gcc' failed with exit status 1
