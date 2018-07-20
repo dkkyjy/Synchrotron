@@ -1,16 +1,10 @@
 #include <math.h>
 #include <gsl/gsl_sf_gamma.h>
 #include "Synchrotron.h"
-#include "Python.h"
-#include <numpy/arrayobject.h>
-
-double c = 3.00e10;
-double e = 4.803e-10;
-double m_e = 9.11e-28;
-double sigma_T = 6.65e-25;
+#include <stdio.h>
 
 double U_B(double B){
-    return pow(B, 2) / (8 * M_PI);
+    return B * B / (8 * M_PI);
 }
 
 double Nu_B(double B){
@@ -51,6 +45,15 @@ double J_PowerLaw(double nu, double B, double* pars){
     return j_PowerLaw(nu, B, pars[0], pars[1], pars[2], pars[3]);
 }
 
+/*
+void J_PowerLaw(double* nu, double B, double K, double n, double gamma_min, double gamma_max, double* j, int size){
+    for(int i=0; i<size; i++){
+        j[i] = j_PowerLaw(nu[i], B, K, n, gamma_min, gamma_max);
+    }
+}
+*/
+
+
 
 //Break Power-Law
 double j_BrokenPowerLaw(double nu, double B, double K1, double K2, double n1, double n2, double gamma_min, double gamma_b, double gamma_max){
@@ -68,16 +71,35 @@ double J_BrokenPowerLaw(double nu, double B, double* pars){
     return j_BrokenPowerLaw(nu, B, pars[0], pars[1], pars[2], pars[3], pars[4], pars[5], pars[6]);
 }
 
-//SpectrumType: 1-PowerLaw; 2-BrokenPowerLaw
-PyObject* J(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
-    Py_ssize_t parNum = PyTuple_Size(SpectrumPars);
-    double pars[parNum];
-    for(int ipar=0; ipar<parNum; ipar++)
-        pars[ipar] = PyFloat_AsDouble(PyTuple_GetItem(SpectrumPars, ipar));
+/*
+void J_BrokenPowerLaw(double* nu, double B, double K1, double K2, double n1, double n2, double gamma_min, double gamma_b, double gamma_max, double* j, int size){
+    for(int i=0; i<size; i++){
+        j[i] = j_BrokenPowerLaw(nu[i], B, K1, K2, n1, n2, gamma_min, gamma_b, gamma_max);
+    }
+}
+*/
 
-    PyArrayObject* in_array;
+//SpectrumType: 1-PowerLaw; 2-BrokenPowerLaw
+static PyObject* J(PyObject* self, PyObject* args){
+    PyArrayObject* nu;
+    double B;
+    int SpectrumType;
+    PyTupleObject* SpectrumPars;
+    PyArg_ParseTuple(args, "O!diO!", &PyArray_Type, &nu, &B, &SpectrumType, &PyTuple_Type, &SpectrumPars);
+    //printf("B=%f\n", B);
+    //printf("SpectrumType=%d\n", SpectrumType);
+    
+    Py_ssize_t parNum = PyTuple_Size(SpectrumPars);
+//    printf("parNum=%d\n", parNum);
+    double pars[parNum];
+    for(int ipar=0; ipar<parNum; ++ipar){
+        //printf("ipar = %d\n", ipar);
+        pars[ipar] = PyFloat_AsDouble(PyTuple_GetItem(SpectrumPars, ipar));
+        //printf("pars[%d]=%f\n", ipar, pars[ipar]);
+    }
+
+    PyArrayObject* in_array = nu;
     PyObject* out_array;
-    PyArg_ParseTuple(nu, "O!", &PyArray_Type, &in_array);
     out_array = PyArray_NewLikeArray(in_array, NPY_ANYORDER, NULL, 0);
     PyArrayIterObject* in_iter = PyArray_IterNew(in_array);
     PyArrayIterObject* out_iter = PyArray_IterNew(out_array);
@@ -91,9 +113,9 @@ PyObject* J(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
         PyArray_ITER_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
     }
-    PyArray_DECREF(in_iter);
-    PyArray_DECREF(out_iter);
-    PyArray_INCREF(out_array);
+    Py_DECREF(in_iter);
+    Py_DECREF(out_iter);
+    Py_INCREF(out_array);
     return out_array;
 }
 
@@ -122,6 +144,13 @@ double K_PowerLaw(double nu, double B, double* pars){
     return k_PowerLaw(nu, B, pars[0], pars[1], pars[2], pars[3]);
 }
 
+/*
+void K_PowerLaw(double* nu, double B, double K, double n, double gamma_min, double gamma_max, double* k, int size){
+    for(int i=0; i<size; i++){
+        k[i] = k_PowerLaw(nu[i], B, K, n, gamma_min, gamma_max);
+    }
+}
+*/
 
 //Broken Power-Law
 double k_BrokenPowerLaw(double nu, double B, double K1, double K2, double n1, double n2, double gamma_min, double gamma_b, double gamma_max){
@@ -139,7 +168,14 @@ double K_BrokenPowerLaw(double nu, double B, double* pars){
     return k_BrokenPowerLaw(nu, B, pars[0], pars[1], pars[2], pars[3], pars[4], pars[5], pars[6]);
 }
 
-
+/*
+void K_BrokenPowerLaw(double* nu, double B, double K1, double K2, double n1, double n2, double gamma_min, double gamma_b, double gamma_max, double* k, int size){
+    for(int i=0; i<size; i++){
+        k[i] = k_BrokenPowerLaw(nu[i], B, K1, K2, n1, n2, gamma_min, gamma_b, gamma_max);
+    }
+}
+*/
+/*
 //SpectrumType: 1-PowerLaw; 2-BrokenPowerLaw
 PyObject* K(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
     Py_ssize_t parNum = PyTuple_Size(SpectrumPars);
@@ -163,13 +199,13 @@ PyObject* K(PyObject* nu, double B, int SpectrumType, PyObject* SpectrumPars){
         PyArray_ITER_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
     }
-    PyArray_DECREF(in_iter);
-    PyArray_DECREF(out_iter);
-    PyArray_INCREF(out_array);
+    Py_DECREF(in_iter);
+    Py_DECREF(out_iter);
+    Py_INCREF(out_array);
     return out_array;
 }
-
-
+*/
+/*
 PyObject* Tau(PyObject* k, double R){
     PyArrayObject* in_array;
     PyObject* out_array;
@@ -184,11 +220,12 @@ PyObject* Tau(PyObject* k, double R){
         PyArray_ITER_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
     }
-    PyArray_DECREF(in_iter);
-    PyArray_DECREF(out_iter);
-    PyArray_INCREF(out_array);
+    Py_DECREF(in_iter);
+    Py_DECREF(out_iter);
+    Py_INCREF(out_array);
     return out_array;
 }
+*/
 
 /*
 PyArrayObject* I(PyArrayObject* j, PyArrayObject* k, double R){
@@ -245,6 +282,7 @@ PyObject* F(PyObject* nuList, double B, double R, double delta, double dL, doubl
 }
 */
 
+/*
 PyObject* Nu_obs(PyObject* nu, double delta, double z){
     PyArrayObject* in_array;
     PyObject* out_array;
@@ -263,4 +301,32 @@ PyObject* Nu_obs(PyObject* nu, double delta, double z){
     PyArray_DECREF(out_iter);
     PyArray_INCREF(out_array);
     return out_array;
+}
+*/
+
+static PyMethodDef Synchrotron[] = 
+{
+    {"J", (PyCFunction)J, METH_VARARGS, "calculate the emission coefficient of Synchrotron"},
+//    {"K", (PyCFunction)K, METH_VARARGS, "calculate the absorption coefficient of Synchrotron"},
+    {NULL, NULL}
+};
+
+static struct PyModuleDef moduledef = {
+        PyModuleDef_HEAD_INIT,
+        "Synchrotron",
+        NULL,
+        -1,
+        Synchrotron,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+
+PyMODINIT_FUNC
+PyInit_Synchrotron(void)
+{
+    PyObject *module = PyModule_Create(&moduledef);
+    import_array();
+    return module;
 }
