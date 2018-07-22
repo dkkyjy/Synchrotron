@@ -93,8 +93,7 @@ static PyObject* J(PyObject* self, PyObject* args){
         pars[ipar] = PyFloat_AsDouble(PyTuple_GetItem(SpectrumPars, ipar));
 
     PyArrayObject* in_array = nu;
-    PyObject* out_array;
-    out_array = PyArray_NewLikeArray(in_array, NPY_ANYORDER, NULL, 0);
+    PyObject* out_array = PyArray_NewLikeArray(in_array, NPY_ANYORDER, NULL, 0);
     PyArrayIterObject* in_iter = PyArray_IterNew(in_array);
     PyArrayIterObject* out_iter = PyArray_IterNew(out_array);
     while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
@@ -204,104 +203,6 @@ static PyObject* K(PyObject* self, PyObject* args){
     return out_array;
 }
 
-/*
-PyObject* Tau(PyObject* k, double R){
-    PyArrayObject* in_array;
-    PyObject* out_array;
-    PyArg_ParseTuple(k, "O!", &PyArray_Type, &in_array);
-    out_array = PyArray_NewLikeArray(in_array, NPY_ANYORDER, NULL, 0);
-    PyArrayIterObject* in_iter = PyArray_IterNew(in_array);
-    PyArrayIterObject* out_iter = PyArray_IterNew(out_array);
-    while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
-        double* in_dataptr = in_iter->dataptr;
-        double* out_dataptr = out_iter->dataptr;
-        *out_dataptr = 2 * R * *in_dataptr;
-        PyArray_ITER_NEXT(in_iter);
-        PyArray_ITER_NEXT(out_iter);
-    }
-    Py_DECREF(in_iter);
-    Py_DECREF(out_iter);
-    Py_INCREF(out_array);
-    return out_array;
-}
-*/
-
-/*
-PyArrayObject* I(PyArrayObject* j, PyArrayObject* k, double R){
-    PyArrayObject* tau = Tau(k, R)
-    PyArrayObject* I = PyArray_NewLikeArray(j, NPY_ANYORDER, NULL, 0);
-    PyArrayIterObject* j_iter = PyArray_IterNew(j);
-    PyArrayIterObject* k_iter = PyArray_IterNew(k);
-    PyArrayIterObject* tau_iter = PyArray_IterNew(tau);
-    PyArrayIterObject* I_iter = PyArray_IterNew(I);
-    while(j_iter->index < j_iter->size && I_iter->index < I_iter->size){
-        double* j_dataptr = j_iter->dataptr;
-        double* k_dataptr = k_iter->dataptr;
-        double* tau_dataptr = tau_iter->dataptr;
-        double* I_dataptr = I_iter->dataptr;
-        *I_dataptr = *j_dataptr / *k_dataptr * (1 - 2/pow(*tau_dataptr, 2) * (1 - exp(-(*tau_dataptr)*(*tau_dataptr + 1))));
-        PyArray_ITER_NEXT(j_iter);
-        PyArray_ITER_NEXT(k_iter);
-        PyArray_ITER_NEXT(tau_iter);
-        PyArray_ITER_NEXT(I_iter);
-    }
-    PyArray_DECREF(j_iter);
-    PyArray_DECREF(k_iter);
-    PyArray_DECREF(tau_iter);
-    PyArray_DECREF(I_iter);
-    PyArray_INCREF(I);
-    return I;
-}
-
-
-PyObject* L(PyObject* nuList, double B, double R, int SpectrumType, PyObject* SpectrumPars){
-    PyObject* IList = I(nuList, B, R, SpectrumType, SpectrumPars);
-
-    Py_ssize_t num = PyList_Size(nuList);
-    PyObject* LList = PyList_New(num);
-    for(int i=0; i<num; i++){
-        double I = PyFloat_AsDouble(PyList_GetItem(IList, i));
-        double L = 4 * pow(M_PI, 2) * R * I;
-        PyList_SetItem(LList, i, PyFloat_FromDouble(L));
-    }
-    return LList;
-}
-
-PyObject* F(PyObject* nuList, double B, double R, double delta, double dL, double z, int SpectrumType, PyObject* SpectrumPars){
-    PyObject* LList = L(nuList, B, R, SpectrumType, SpectrumPars);
-
-    Py_ssize_t num = PyList_Size(nuList);
-    PyObject* FList = PyList_New(num);
-    for(int i=0; i<num; i++){
-        double L = PyFloat_AsDouble(PyList_GetItem(LList, i));
-        double F = L / (4 * M_PI * pow(dL, 2)) * pow(delta, 3) * (1+z);
-        PyList_SetItem(FList, i, PyFloat_FromDouble(F));
-    }
-    return FList;
-}
-*/
-
-/*
-PyObject* Nu_obs(PyObject* nu, double delta, double z){
-    PyArrayObject* in_array;
-    PyObject* out_array;
-    PyArg_ParseTuple(nu, "O!", &PyArray_Type, &in_array);
-    out_array = PyArray_NewLikeArray(in_array, NPY_ANYORDER, NULL, 0);
-    PyArrayIterObject* in_iter = PyArray_IterNew(in_array);
-    PyArrayIterObject* out_iter = PyArray_IterNew(out_array);
-    while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
-        double* in_dataptr = in_iter->dataptr;
-        double* out_dataptr = out_iter->dataptr;
-        *out_dataptr = *in_dataptr * delta / (1+z);
-        PyArray_ITER_NEXT(in_iter);
-        PyArray_ITER_NEXT(out_iter);
-    }
-    PyArray_DECREF(in_iter);
-    PyArray_DECREF(out_iter);
-    PyArray_INCREF(out_array);
-    return out_array;
-}
-*/
 
 static PyMethodDef Synchrotron[] = 
 {
