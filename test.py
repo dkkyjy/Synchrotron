@@ -3,6 +3,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import Synchrotron
 
+'''
+  Follow the paper A&A 367, 809-825 (2001)
+  The multifrequency emission of Mrk 501 from radio to TeV gamma-rays
+  The emission and absorption coefficient calculation using the approximation (Appendix A)
+  The equation (3) has some difficult in high energy, donot use it.
+'''
+ 
 delta = 10
 dL = 1e27
 R = 1e16

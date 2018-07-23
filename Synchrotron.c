@@ -2,6 +2,12 @@
 #include <gsl/gsl_sf_gamma.h>
 #include "Synchrotron.h"
 #include <stdio.h>
+/*
+ * Follow the paper A&A 367, 809-825 (2001)
+ * The multifrequency emission of Mrk 501 from radio to TeV gamma-rays
+ * The emission and absorption coefficient calculation using the approximation (Appendix A)
+ * The equation (3) has some difficult in high energy, donot use it.
+ */
 
 double U_B(double B){
     return B * B / (8 * M_PI);
