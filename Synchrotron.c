@@ -7,9 +7,11 @@
 #include <stdio.h>
 #include <gsl/gsl_sf_gamma.h>
 #include <gsl/gsl_sf_bessel.h>
-#include <gsl/gsl_integration.h>
-#include "Synchrotron.h"
+#include <gsl/gsl_sf_hyperg.h>
+#include <gsl/gsl_sf_synchrotron.h>
+#include "ElectronDistribution.h"
 #include "PhysicalConstant.h"
+#include "Synchrotron.h"
 
 
 double U_B(double B){
@@ -20,6 +22,8 @@ double Nu_B(double B){
     return e * B / (2 * M_PI * m_e * c);
 }
 
+/*
+//Synchrotron Function F(x) = x * \int_{x}^{\infty} dt K_{5/3}(t)
 double f_(double x){
     int N = 10000;
     double dx = (70*x - x) / N;
@@ -31,8 +35,9 @@ double f_(double x){
     }
     return x * sum;
 }
+*/
 
-
+//Follow the paper ApJ 167, 26 (2006) Models for nonthermal photon spectra
 static PyObject* F(PyObject* self, PyObject* args){
     PyArrayObject* x;
     PyArg_ParseTuple(args, "O!", &PyArray_Type, &x);
@@ -44,7 +49,7 @@ static PyObject* F(PyObject* self, PyObject* args){
     while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
         double* in_dataptr = in_iter->dataptr;
         double* out_dataptr = out_iter->dataptr;
-        *out_dataptr = f_(*in_dataptr);
+        *out_dataptr = gsl_sf_synchrotron_1(*in_dataptr);
         PyArray_ITER_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
     }
@@ -54,13 +59,12 @@ static PyObject* F(PyObject* self, PyObject* args){
     return out_array;
 }
 
+
 //Follow the paper ApJ 167, 26 (2006) Models for nonthermal photon spectra
 double W_(double x, double a, double b){
-    printf("%f\t%f\t%f\n", 1/2.+b-a, 1+2*b, x);
-    double result = gsl_sf_hyperg_U(a, b, x);//???????????????????????????
-    printf("%f\n", result);
+    double result = gsl_sf_hyperg_U(a, b, x);
     return exp(-x/2.) * pow(x, b + 1/2.) * gsl_sf_hyperg_U(1/2.+b-a, 1+2*b, x);
-}//Why it doesn't work????????????????????????????????????????????????????
+}
 
 double R_(double x){
     return M_PI / 2. * x * (W_(x, 0, 4./3.) * W_(x, 0, 1./3.) - W_(x, 1./2., 5./6.) * W_(x, -1./2., 5./6.));
@@ -86,6 +90,61 @@ static PyObject* R(PyObject* self, PyObject* args){
     Py_INCREF(out_array);
     return out_array;
 }
+
+double j_Sychrotron(double nu, double B, int SpectrumType, double* pars){
+    double nu_B = Nu_B(B);
+
+    int Nbins_gamma = 10000;
+    double gamma_min;
+    double gamma_max;
+    if(SpectrumType == 1){
+        gamma_min = pars[2];
+        gamma_max = pars[3];
+    }
+    if(SpectrumType == 2){
+        gamma_min = pars[3];
+        gamma_max = pars[5];
+    }
+    double dlog_gamma = (log10(gamma_max) - log10(gamma_min)) / Nbins_gamma;
+
+    double sum = 0;
+    for(int i=0; i<Nbins_gamma; ++i){
+        double gamma = pow(10, log10(gamma_min) + dlog_gamma * i);
+        double n_gamma = N_gamma(gamma, SpectrumType, pars);
+        sum += n_gamma * R_(nu / (3/2. * nu_B * gamma * gamma)) * gamma * dlog_gamma;
+    }
+    return 1./(4*M_PI) * sqrt(3) * pow(e, 3) * B / (m_e * c * c) * sum;
+}
+
+double k_Sychrotron(double nu, double B, int SpectrumType, double* pars){
+    double nu_B = Nu_B(B);
+
+    int Nbins_gamma = 10000;
+    double gamma_min;
+    double gamma_max;
+    double n;
+    if(SpectrumType == 1){
+        n = pars[1];
+        gamma_min = pars[2];
+        gamma_max = pars[3];
+    }
+    if(SpectrumType == 2){
+        n = pars[1];
+        gamma_min = pars[3];
+        gamma_max = pars[5];
+    }
+    double dlog_gamma = (log10(gamma_max) - log10(gamma_min)) / Nbins_gamma;
+
+    double sum = 0;
+    for(int i=0; i<Nbins_gamma; ++i){
+        double gamma = pow(10, log10(gamma_min) + dlog_gamma * i);
+        double n_gamma = N_gamma(gamma, SpectrumType, pars);
+        sum += n_gamma * R_(nu / (3/2. * nu_B * gamma * gamma)) * dlog_gamma;
+    }
+    return (n+2) / (8*M_PI * m_e * nu * nu) * sqrt(3) * pow(e, 3) * B / (m_e * c * c) * sum;
+}
+
+
 
 
 double c1 = 0.78;
@@ -189,6 +248,7 @@ static PyObject* J(PyObject* self, PyObject* args){
     while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
         double* in_dataptr = in_iter->dataptr;
         double* out_dataptr = out_iter->dataptr;
+        //*out_dataptr = j_Sychrotron(*in_dataptr, B, SpectrumType, pars);
         *out_dataptr = J_Sychrotron(*in_dataptr, B, SpectrumType, pars);
         PyArray_ITER_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
@@ -292,6 +352,7 @@ static PyObject* K(PyObject* self, PyObject* args){
     while(in_iter->index < in_iter->size && out_iter->index < out_iter->size){
         double* in_dataptr = in_iter->dataptr;
         double* out_dataptr = out_iter->dataptr;
+        //*out_dataptr = k_Sychrotron(*in_dataptr, B, SpectrumType, pars);
         *out_dataptr = K_Sychrotron(*in_dataptr, B, SpectrumType, pars);
         PyArray_ITER_NEXT(in_iter);
         PyArray_ITER_NEXT(out_iter);
